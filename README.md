@@ -1,4 +1,4 @@
-# ws2811-string-eyes-blink
+# ws2801-string-eyes-blink
 
 To build:
     
