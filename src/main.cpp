@@ -28,9 +28,9 @@ void setup() {
   FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   //FastLED.setBrightness(BRIGHTNESS);
   
-  fill_solid(leds, NUM_LEDS, 0x000000);
+  fill_solid(leds, NUM_LEDS, 0x111111);
   FastLED.show();
-  delay(3000);
+  delay(200);
 
   now = millis();
   for(uint8_t i=0; i<EYE_SET_COUNT; i++) {
