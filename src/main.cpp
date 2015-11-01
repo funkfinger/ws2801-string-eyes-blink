@@ -11,54 +11,107 @@ FASTLED_USING_NAMESPACE
 #define CLK_PIN 4
 #define LED_TYPE WS2801
 #define COLOR_ORDER RGB
-#define NUM_LEDS 50
+#define NUM_LEDS 100
+#define SKIP_DISTANCE 8
+#define BRIGHTNESS 254
+#define FADE_OFF_STEP 5
+#define FADE_ON_STEP 5
+  
+
+#define EYE_SET_COUNT 17
+long eyeDelays[EYE_SET_COUNT];
+uint8_t eyeState[EYE_SET_COUNT];
+CRGB eyeSetColor[EYE_SET_COUNT];
+
 CRGB leds[NUM_LEDS];
 
-#define EYE_SET_COUNT 10
-long eyeDelays[EYE_SET_COUNT];
-uint8_t eyeColor[EYE_SET_COUNT];
-
-#define BRIGHTNESS 200
+void handleEyes();
 
 unsigned long now;
+
+class Eyes {
+  public:
+    uint8_t state;
+    uint8_t hue;
+    uint8_t index;
+    int brightness;
+    long durrationInState;
+};
+
+Eyes eyes[EYE_SET_COUNT];
+
+
+void setEyes(Eyes e);
 
 void setup() {
   delay(3000); // 3 second delay for recovery
   //FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  //FastLED.setBrightness(BRIGHTNESS);
-  
-  fill_solid(leds, NUM_LEDS, 0x111111);
-  FastLED.show();
-  delay(200);
 
-  now = millis();
-  for(uint8_t i=0; i<EYE_SET_COUNT; i++) {
-      eyeColor[i] = 1;
-      eyeDelays[i] = now + 1000;
-    }
+  // FastLED.setBrightness(BRIGHTNESS);
+  fill_rainbow(leds, NUM_LEDS, 0);
   FastLED.show();
+  delay(1000); // 1 second strand test...
+
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
+  delay(1000);
+  
+  for (uint8_t i=0; i < EYE_SET_COUNT; i++) {
+    eyes[i].state = 0; // on
+    eyes[i].hue = 16; // orange
+    eyes[i].index = i * SKIP_DISTANCE; // first led
+    eyes[i].durrationInState = millis() + 1000; // 10 seconds
+  }
 }
 
 
 void loop() {
-  now = millis();
-  for(uint8_t i=0; i<EYE_SET_COUNT; i++) {
-    if(eyeDelays[i] < now) {
-      CRGB c = 0xFF0000;
-      if(eyeColor[i] == 1) {
-        eyeColor[i] = 0;
-        eyeDelays[i] = now + random16(2000,6000);
-        c = 0x000000;
+  handleEyes();
+  FastLED.show();
+  // delay(1);
+}
+
+void handleEyes() {
+  for (uint8_t i=0; i < EYE_SET_COUNT; i++) {
+    now = millis();
+    if (now > eyes[i].durrationInState) {
+      switch(eyes[i].state){
+        case 0 : // fade on > on
+          eyes[i].durrationInState = random8(8) == 1 ? now + 200 : now + random16(200, 3000);
+          eyes[i].state = 1;
+          break;
+        case 1 : // on > fade off
+          if (eyes[i].brightness - FADE_OFF_STEP < 0) {
+            eyes[i].state = 2;
+            eyes[i].brightness = 0;
+          }
+          else {
+            eyes[i].brightness -= FADE_OFF_STEP;
+          }
+          break;        
+        case 2 : // fade off > off
+          eyes[i].durrationInState = random(8) == 1 ? now + 15000 : now + random16(2000, 6000);
+          eyes[i].state = 3;
+          break;
+        case 3 : // off > fade on
+          if (eyes[i].brightness + FADE_ON_STEP > 254) {
+            eyes[i].state = 0;
+            eyes[i].brightness = 254;
+          }
+          else {
+            eyes[i].brightness += FADE_ON_STEP;
+          }
+          break;
+        
       }
-      else {
-        eyeColor[i] = 1;
-        eyeDelays[i] = now + random16(200,3000);
-      }
-      leds[i*5] = c;
-      leds[i*5+1] = c;
+      setEyes(eyes[i]);
     }
   }
-  FastLED.show();
+}
+
+void setEyes(Eyes e) {
+  leds[e.index] = CHSV(e.hue, 255, e.brightness);
+  leds[e.index + 1] = CHSV(e.hue, 255, e.brightness);
 }
 
