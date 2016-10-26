@@ -40,6 +40,40 @@ class Eyes {
 
 Eyes eyes[EYE_SET_COUNT];
 
+//Cylon - LED sweeps back and forth, with the color, delay and number of cycles of your choice 
+void cylon(CRGB color, uint16_t wait, uint8_t number_of_cycles)
+{
+	FastLED.setBrightness(255);
+	for (uint8_t times = 0; times<=number_of_cycles; times++)
+	{
+		// Make it look like one LED is moving in one direction
+		for(int led_number = 0; led_number < NUM_LEDS; led_number++)
+		{
+			//Apply the color that was passed into the function
+			leds[led_number] = color;
+			//Actually turn on the LED we just set
+			FastLED.show();
+			// Turn it back off
+			leds[led_number] = CRGB::Black;
+			// Pause before "going" to next LED
+			delay(wait);
+		}
+
+		// Now "move" the LED the other direction
+		for(int led_number = NUM_LEDS-1; led_number >= 0; led_number--)
+		{
+			//Apply the color that was passed into the function
+			leds[led_number] = color;
+			//Actually turn on the LED we just set
+			FastLED.show();
+			// Turn it back off
+			leds[led_number] = CRGB::Black;
+			// Pause before "going" to next LED
+			delay(wait);
+		}
+	}
+	return;
+}
 
 void setEyes(Eyes e);
 
@@ -48,10 +82,12 @@ void setup() {
   //FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
-  // FastLED.setBrightness(BRIGHTNESS);
-  fill_rainbow(leds, NUM_LEDS, 0);
-  FastLED.show();
-  delay(1000); // 1 second strand test...
+  FastLED.setBrightness(BRIGHTNESS);
+  
+  cylon(CRGB::Red,25, 2);
+  // fill_rainbow(leds, NUM_LEDS, 0);
+  // FastLED.show();
+  // delay(1000); // 1 second strand test...
 
   fill_solid(leds, NUM_LEDS, CRGB::Black);
   FastLED.show();
